@@ -3,12 +3,13 @@ package logrot
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"runtime/debug"
 	"testing"
 	"time"
+
+	"github.com/cention-sany/log"
 )
 
 func remove(t *testing.T, files ...string) {
@@ -48,6 +49,23 @@ func TestWriteTo(t *testing.T) {
 	}
 }
 
+func TestWriteToWithLog(t *testing.T) {
+	defer remove(t, "log.txt")
+	os.Remove("log.txt")
+	l := log.New(nil, "", 0)
+	defer WriteToWithLog("log.txt", l).Close()
+
+	want := "some log\n"
+	l.Println("some log")
+	fmt.Fprintln(os.Stdout, "This is from stdout")
+	fmt.Fprintln(os.Stderr, "This is from stderr")
+	got := readFile(t, "log.txt")
+
+	if got != want {
+		t.Errorf("\nwant: '%s'\n got: '%s'", want, got)
+	}
+}
+
 func TestWriteAllTo(t *testing.T) {
 	os.Remove("log.txt")
 	log.SetFlags(0)
@@ -59,6 +77,29 @@ func TestWriteAllTo(t *testing.T) {
 	want := "some log\nThis is from stdout\nThis is from stderr\n"
 
 	log.Println("some log")
+	fmt.Fprintln(os.Stdout, "This is from stdout")
+	fmt.Fprintln(os.Stderr, "This is from stderr")
+
+	os.Stdout = stdout
+	os.Stderr = stderr
+
+	got := readFile(t, "log.txt")
+	if got != want {
+		t.Errorf("\nwant: '%s'\n got: '%s'", want, got)
+	}
+}
+
+func TestWriteAllToWithLog(t *testing.T) {
+	os.Remove("log.txt")
+	l := log.New(nil, "", 0)
+	stdout := os.Stdout
+	stderr := os.Stderr
+
+	defer WriteAllToWithLog("log.txt", l).Close()
+
+	want := "some log\nThis is from stdout\nThis is from stderr\n"
+
+	l.Println("some log")
 	fmt.Fprintln(os.Stdout, "This is from stdout")
 	fmt.Fprintln(os.Stderr, "This is from stderr")
 
@@ -100,6 +141,45 @@ func TestRotate(t *testing.T) {
 	rl.rotate()
 	want = "This is after rotation\n"
 	log.Printf(want)
+
+	os.Stdout = stdout
+	os.Stderr = stderr
+	got = readFile(t, "log.txt")
+
+	if got != want {
+		t.Errorf("rotate() failed\nwant: '%s'\n got: '%v'", want, got)
+	}
+}
+
+func TestRotateWithLog(t *testing.T) {
+	os.Remove("log.txt")
+	os.Remove("log.txt.old")
+	l := log.New(nil, "", 0)
+	stdout := os.Stdout
+	stderr := os.Stderr
+	defer remove(t, "log.txt", "log.txt.old")
+
+	rl := WriteToWithLog("log.txt", l)
+	defer rl.Close()
+	l.Println("some log")
+	err := os.Rename("log.txt", "log.txt.old")
+	if err != nil {
+		os.Stdout = stdout
+		os.Stderr = stderr
+		t.Fatalf("TestRotate(): %v\n", err)
+	}
+	l.Println("new filename")
+
+	got := readFile(t, "log.txt.old")
+	want := "some log\nnew filename\n"
+
+	if got != want {
+		t.Errorf("log file renamed failed\nwant: '%s'\n got: '%v'", want, got)
+	}
+
+	rl.rotate()
+	want = "This is after rotation\n"
+	l.Printf(want)
 
 	os.Stdout = stdout
 	os.Stderr = stderr

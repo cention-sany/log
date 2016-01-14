@@ -7,7 +7,8 @@ package log_test
 import (
 	"bytes"
 	"fmt"
-	"log"
+
+	"github.com/cention-sany/log"
 )
 
 func ExampleLogger() {
@@ -17,5 +18,5 @@ func ExampleLogger() {
 
 	fmt.Print(&buf)
 	// Output:
-	// logger: example_test.go:16: Hello, log file!
+	// logger: example_test.go:17: Hello, log file!
 }
