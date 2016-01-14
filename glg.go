@@ -6,6 +6,13 @@ import (
 	"io"
 )
 
+const (
+	LvlNoLog = iota
+	LvlDebug
+)
+
+var Level = LvlNoLog
+
 type Prefixer interface {
 	Prefix() string
 	SetPrefix(prefix string)

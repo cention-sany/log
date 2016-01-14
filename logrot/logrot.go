@@ -9,10 +9,12 @@ import (
 	"github.com/cention-sany/log"
 )
 
+var lg log.IFLogger
+
 func mustOpenFileForAppend(name string) *os.File {
 	f, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		log.Fatal("Error: ", err)
+		lg.Fatal("Error: ", err)
 	}
 	return f
 }
@@ -67,7 +69,7 @@ func rotateOn(name string, sig os.Signal, l log.OutSetter) *LogRot {
 			select {
 			case s := <-sigs:
 				if s == rl.signal {
-					log.Printf("%s received - rotating log file handle on %s\n", s, rl.name)
+					lg.Printf("%s received - rotating log file handle on %s\n", s, rl.name)
 					rl.rotate()
 				}
 			case <-rl.quit:
@@ -90,4 +92,12 @@ func (rl *LogRot) rotate() {
 	rl.LogFile = mustOpenFileForAppend(rl.name)
 	rl.lg.SetOutput(rl.LogFile)
 	oldLog.Close()
+}
+
+func init() {
+	if log.Level == log.LvlNoLog {
+		lg = log.NoLog()
+	} else {
+		lg = log.StdLog()
+	}
 }
