@@ -24,6 +24,10 @@ type OutSetter interface {
 	SetOutput(w io.Writer)
 }
 
+type FlagsSetter interface {
+	SetFlags(int)
+}
+
 type PanicLogger interface {
 	Panic(v ...interface{})
 	Panicf(format string, v ...interface{})
@@ -43,13 +47,13 @@ type PrintLogger interface {
 }
 
 type PLogger interface {
-	Prefixer
 	PanicLogger
 	PrintLogger
 }
 
 type IFLogger interface {
 	OutSetter
+	FlagsSetter
 	Prefixer
 	FatalLogger
 	PanicLogger
@@ -95,6 +99,8 @@ func (nolog) Println(v ...interface{}) {}
 func (nolog) SetPrefix(prefix string) {}
 
 func (nolog) SetOutput(w io.Writer) {}
+
+func (nolog) SetFlags(int) {}
 
 // access to stdlib log
 type stdLibLog struct{}
@@ -149,4 +155,8 @@ func (stdLibLog) SetPrefix(prefix string) {
 
 func (stdLibLog) SetOutput(w io.Writer) {
 	log.SetOutput(w)
+}
+
+func (stdLibLog) SetFlags(f int) {
+	log.SetFlags(f)
 }
