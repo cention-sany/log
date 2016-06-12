@@ -30,7 +30,7 @@ type LogRot struct {
 
 // WriteTo sets the log output to the given file and reopen the file on SIGHUP.
 func WriteTo(name string) *LogRot {
-	return rotateOn(name, syscall.SIGHUP, log.StdLog())
+	return rotateOn(name, syscall.SIGHUP, log.StdLib())
 }
 
 func WriteToWithLog(name string, l log.OutSetter) *LogRot {
