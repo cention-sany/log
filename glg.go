@@ -24,8 +24,16 @@ type OutSetter interface {
 	SetOutput(w io.Writer)
 }
 
+type Outputter interface {
+	Output(calldepth int, s string) error
+}
+
 type FlagsSetter interface {
 	SetFlags(int)
+}
+
+type FlagsGetter interface {
+	Flags() int
 }
 
 type PanicLogger interface {
@@ -53,16 +61,18 @@ type PLogger interface {
 
 type IFLogger interface {
 	OutSetter
+	Outputter
 	FlagsSetter
+	FlagsGetter
 	Prefixer
 	FatalLogger
 	PanicLogger
 	PrintLogger
 }
 
-// StdLog is standard library global logging.
-// This is created to make StdLog bind to Logger interface.
-// Thus stdlib logger bind to Logger interface.
+// StdLog is singleton object for this log package. It is equivalent to
+// standard library log object but NOT equal it. Use the StdLib for accessing
+// standard library log singleton.
 func StdLog() IFLogger {
 	return std
 }
@@ -100,11 +110,16 @@ func (nolog) SetPrefix(prefix string) {}
 
 func (nolog) SetOutput(w io.Writer) {}
 
+func (nolog) Output(calldepth int, s string) error { return nil }
+
 func (nolog) SetFlags(int) {}
+
+func (nolog) Flags() int { return 0 }
 
 // access to stdlib log
 type stdLibLog struct{}
 
+// StdLib allows access to global singleton standard library log object.
 func StdLib() IFLogger {
 	return &stdLibLog{}
 }
@@ -157,6 +172,14 @@ func (stdLibLog) SetOutput(w io.Writer) {
 	log.SetOutput(w)
 }
 
+func (stdLibLog) Output(calldepth int, s string) error {
+	return log.Output(calldepth, s)
+}
+
 func (stdLibLog) SetFlags(f int) {
 	log.SetFlags(f)
+}
+
+func (stdLibLog) Flags() int {
+	return log.Flags()
 }
