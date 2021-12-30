@@ -5,8 +5,6 @@ package log
 import (
 	"io"
 	"log"
-
-	"c3/logger"
 )
 
 const (
@@ -54,7 +52,6 @@ type PrintLogger interface {
 	Print(v ...interface{})
 	Printf(format string, v ...interface{})
 	Println(v ...interface{})
-	Printm(m logger.LogMessage)
 }
 
 type PLogger interface {
@@ -108,8 +105,6 @@ func (nolog) Print(v ...interface{}) {}
 func (nolog) Printf(format string, v ...interface{}) {}
 
 func (nolog) Println(v ...interface{}) {}
-
-func (nolog) Printm(m logger.LogMessage) {}
 
 func (nolog) SetPrefix(prefix string) {}
 
@@ -167,10 +162,6 @@ func (stdLibLog) Printf(format string, v ...interface{}) {
 
 func (stdLibLog) Println(v ...interface{}) {
 	log.Println(v...)
-}
-
-func (stdLibLog) Printm(m logger.LogMessage) {
-	log.Print(m.String())
 }
 
 func (stdLibLog) SetPrefix(prefix string) {
